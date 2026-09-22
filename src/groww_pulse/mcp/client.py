@@ -181,5 +181,31 @@ class MCPClient:
                 "message": f"Draft email staged successfully for {to_list}"
             }
 
+        elif tool_name in ("send_email", "gmail_send_email"):
+            to = arguments.get("to", "user@example.com")
+            to_list = [to] if isinstance(to, str) else list(to)
+            subject = arguments.get("subject", "Groww Weekly Review Pulse")
+            body_html = arguments.get("body_html") or arguments.get("body", "")
+
+            try:
+                from ...mcp_server.services.gmail_service import GmailService
+                from ...mcp_server.schemas.tool_schemas import GmailSendEmailInput
+                gmail_service = GmailService()
+                live_res = gmail_service.send_email(GmailSendEmailInput(
+                    to=to_list,
+                    subject=subject,
+                    body=body_html
+                ))
+                logger.info(f"[Live MCP Gmail] Sent live email to {to_list}. Message ID: {live_res.get('messageId')}")
+                return {
+                    "status": "success",
+                    "messageId": live_res.get("messageId"),
+                    "recipientCount": len(to_list),
+                    "message": f"Email sent successfully to {to_list}"
+                }
+            except Exception as e:
+                logger.warning(f"[MCP Gmail] Send email failed ({e}). Staging draft as fallback.")
+                return self._local_fallback_call("gmail_create_draft", arguments)
+
         else:
             raise ValueError(f"Unknown MCP tool: {tool_name}")

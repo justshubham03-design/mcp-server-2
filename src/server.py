@@ -30,9 +30,10 @@ app = FastAPI(
 
 class PulseRequest(BaseModel):
     weeks: int = Field(default=8, ge=1, le=52, description="Number of historical weeks to analyze")
-    email: Optional[str] = Field(default=None, description="Optional recipient email for staging draft")
+    email: Optional[str] = Field(default=None, description="Optional recipient email for draft / send")
     doc_id: Optional[str] = Field(default=None, description="Optional Google Doc ID to append pulse notes")
     use_mock: bool = Field(default=False, description="Whether to use cached mock reviews")
+    send_direct: bool = Field(default=False, description="Whether to send email directly to inbox immediately")
 
 from fastapi.responses import JSONResponse, PlainTextResponse, HTMLResponse
 
@@ -127,8 +128,8 @@ def get_latest_pulse():
     return PlainTextResponse(latest_file.read_text(encoding="utf-8"), media_type="text/markdown")
 
 @app.post("/api/pulse/generate")
-def generate_pulse(req: PulseRequest):
-    """Triggers the full Groww Review Pulse Agent pipeline synchronously."""
+async def generate_pulse(req: PulseRequest):
+    """Triggers the full Groww Review Pulse Agent pipeline synchronously or asynchronously."""
     try:
         app_graph = build_pulse_agent_graph()
         initial_state: AgentState = {
@@ -154,7 +155,7 @@ def generate_pulse(req: PulseRequest):
             "errors": []
         }
 
-        final_state = app_graph.invoke(initial_state)
+        final_state = await app_graph.ainvoke(initial_state)
 
         if final_state.get("status") == "error":
             return JSONResponse(
@@ -167,6 +168,21 @@ def generate_pulse(req: PulseRequest):
 
         pulse = final_state.get("weekly_pulse")
         val_res = final_state.get("validation_result") or {}
+        sent_message_id = None
+
+        if req.send_direct and final_state.get("html_email_content"):
+            from src.groww_pulse.mcp.client import MCPClient
+            mcp_client = MCPClient()
+            target_email = req.email or os.getenv("DEFAULT_EMAIL_RECIPIENT", "leadership@groww.in")
+            week_id = pulse.get("week_identifier", "Weekly") if pulse else "Weekly"
+            subject = f"[Weekly Pulse] Groww User Feedback & Action Items ({week_id})"
+            send_res = await mcp_client.call_tool("gmail_send_email", {
+                "to": [target_email],
+                "subject": subject,
+                "body": final_state.get("html_email_content")
+            })
+            sent_message_id = send_res.get("messageId")
+
         return {
             "status": "success",
             "week_identifier": pulse.get("week_identifier") if pulse else None,
@@ -175,6 +191,7 @@ def generate_pulse(req: PulseRequest):
             "validation_passed": val_res.get("is_valid", False),
             "top_themes": [t.get("theme_name") for t in pulse.get("top_themes", [])] if pulse else [],
             "draft_id": final_state.get("draft_id"),
+            "sent_message_id": sent_message_id,
             "doc_url": final_state.get("doc_url")
         }
 

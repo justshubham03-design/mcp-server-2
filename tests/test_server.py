@@ -7,6 +7,12 @@ client = TestClient(app)
 def test_root_endpoint():
     response = client.get("/")
     assert response.status_code == 200
+    assert "text/html" in response.headers.get("content-type", "")
+    assert "Groww Review Pulse AI" in response.text
+
+def test_api_info_endpoint():
+    response = client.get("/api/info")
+    assert response.status_code == 200
     data = response.json()
     assert data["status"] == "operational"
     assert "health" in data["endpoints"]

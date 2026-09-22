@@ -34,16 +34,30 @@ class PulseRequest(BaseModel):
     doc_id: Optional[str] = Field(default=None, description="Optional Google Doc ID to append pulse notes")
     use_mock: bool = Field(default=False, description="Whether to use cached mock reviews")
 
-@app.get("/")
+from fastapi.responses import JSONResponse, PlainTextResponse, HTMLResponse
+
+@app.get("/", response_class=HTMLResponse)
 def root():
+    """Serves the Groww Review Pulse AI web dashboard."""
+    template_path = Path(__file__).parent.parent / "templates" / "dashboard.html"
+    if template_path.exists():
+        return HTMLResponse(content=template_path.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>Groww Review Pulse AI is Running</h1>")
+
+@app.get("/api/info")
+def api_info():
+    """Returns JSON metadata about the cloud service and endpoints."""
     return {
         "service": "Groww Review Pulse AI",
         "status": "operational",
         "endpoints": {
+            "dashboard": "/",
             "health": "/health",
+            "info": "/api/info",
             "generate_pulse": "POST /api/pulse/generate",
-            "latest_pulse": "/api/pulse/latest",
-            "mcp_tools": "/api/mcp/tools"
+            "latest_pulse": "GET /api/pulse/latest",
+            "mcp_tools": "GET /api/mcp/tools",
+            "mcp_rpc": "POST /mcp"
         }
     }
 

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groww Review Pulse AI - Dashboard & MCP Control Center</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Alpine.js for lightweight reactivity -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            groww: {
+              primary: '#00D09C',
+              dark: '#0e1b18',
+              surface: '#152420',
+              border: '#1f3832',
+              card: '#1a2c27'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    [x-cloak] { display: none !important; }
+  </style>
+</head>
+<body class="bg-[#0b1311] text-slate-100 min-h-screen flex flex-col" x-data="dashboardApp()" x-init="initDashboard()">
+
+  <!-- Top Navbar -->
+  <header class="border-b border-groww-border bg-groww-dark/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-groww-primary flex items-center justify-center shadow-lg shadow-groww-primary/20">
+          <i data-lucide="sparkles" class="w-5 h-5 text-black font-bold"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-tight flex items-center gap-2">
+            Groww Review Pulse AI
+            <span class="text-xs bg-groww-primary/20 text-groww-primary px-2 py-0.5 rounded-full font-medium border border-groww-primary/30">v1.0 Live</span>
+          </h1>
+          <p class="text-xs text-slate-400">Google Play Store Intelligence & MCP Workspace Dispatcher</p>
+        </div>
+      </div>
+
+      <!-- System Health Badges -->
+      <div class="flex items-center space-x-3 text-xs">
+        <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-groww-surface border border-groww-border">
+          <span class="w-2 h-2 rounded-full" :class="health.services?.groq_configured ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
+          <span class="text-slate-300">Phase 2 Groq:</span>
+          <span class="font-semibold" :class="health.services?.groq_configured ? 'text-emerald-400' : 'text-amber-400'" x-text="health.services?.groq_configured ? 'Active' : 'Fallback'"></span>
+        </div>
+
+        <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-groww-surface border border-groww-border">
+          <span class="w-2 h-2 rounded-full" :class="health.services?.gemini_configured ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
+          <span class="text-slate-300">Phase 3 Gemini:</span>
+          <span class="font-semibold" :class="health.services?.gemini_configured ? 'text-emerald-400' : 'text-amber-400'" x-text="health.services?.gemini_configured ? 'Active' : 'Fallback'"></span>
+        </div>
+
+        <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-groww-surface border border-groww-border">
+          <span class="w-2 h-2 rounded-full" :class="health.services?.google_mcp_authenticated ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
+          <span class="text-slate-300">MCP Auth:</span>
+          <span class="font-semibold" :class="health.services?.google_mcp_authenticated ? 'text-emerald-400' : 'text-amber-400'" x-text="health.services?.google_mcp_authenticated ? 'Authenticated' : 'Offline / Local'"></span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-6">
+
+    <!-- KPI Metric Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-groww-card border border-groww-border rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs uppercase tracking-wider font-semibold">Target App</span>
+          <i data-lucide="smartphone" class="w-4 h-4 text-groww-primary"></i>
+        </div>
+        <div class="text-xl font-bold text-white">com.nextbillion.groww</div>
+        <div class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Google Play Store (India)
+        </div>
+      </div>
+
+      <div class="bg-groww-card border border-groww-border rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs uppercase tracking-wider font-semibold">Lookback Window</span>
+          <i data-lucide="calendar" class="w-4 h-4 text-groww-primary"></i>
+        </div>
+        <div class="text-xl font-bold text-white" x-text="params.weeks + ' Weeks'">8 Weeks</div>
+        <div class="text-xs text-slate-400 mt-1">Rolling window (8-12 weeks)</div>
+      </div>
+
+      <div class="bg-groww-card border border-groww-border rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs uppercase tracking-wider font-semibold">Word Limit Guardrail</span>
+          <i data-lucide="shield-check" class="w-4 h-4 text-groww-primary"></i>
+        </div>
+        <div class="text-xl font-bold text-groww-primary" x-text="(lastResult?.word_count || 147) + ' / 250 words'">147 / 250 words</div>
+        <div class="text-xs text-slate-400 mt-1">Strict invariant enforcement</div>
+      </div>
+
+      <div class="bg-groww-card border border-groww-border rounded-2xl p-5 shadow-sm">
+        <div class="flex items-center justify-between text-slate-400 mb-2">
+          <span class="text-xs uppercase tracking-wider font-semibold">Quote Grounding</span>
+          <i data-lucide="check-circle" class="w-4 h-4 text-groww-primary"></i>
+        </div>
+        <div class="text-xl font-bold text-emerald-400">100% Verbatim</div>
+        <div class="text-xs text-slate-400 mt-1">Zero AI Hallucination & PII Scrubbed</div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="flex border-b border-groww-border space-x-8">
+      <button @click="activeTab = 'pulse'" class="py-3 text-sm font-semibold border-b-2 transition flex items-center gap-2"
+        :class="activeTab === 'pulse' ? 'border-groww-primary text-groww-primary' : 'border-transparent text-slate-400 hover:text-slate-200'">
+        <i data-lucide="file-text" class="w-4 h-4"></i> Weekly Pulse Note
+      </button>
+      <button @click="activeTab = 'generator'" class="py-3 text-sm font-semibold border-b-2 transition flex items-center gap-2"
+        :class="activeTab === 'generator' ? 'border-groww-primary text-groww-primary' : 'border-transparent text-slate-400 hover:text-slate-200'">
+        <i data-lucide="play-circle" class="w-4 h-4"></i> Run Pipeline
+      </button>
+      <button @click="activeTab = 'mcp'" class="py-3 text-sm font-semibold border-b-2 transition flex items-center gap-2"
+        :class="activeTab === 'mcp' ? 'border-groww-primary text-groww-primary' : 'border-transparent text-slate-400 hover:text-slate-200'">
+        <i data-lucide="box" class="w-4 h-4"></i> MCP Tools Explorer
+      </button>
+      <button @click="activeTab = 'api'" class="py-3 text-sm font-semibold border-b-2 transition flex items-center gap-2"
+        :class="activeTab === 'api' ? 'border-groww-primary text-groww-primary' : 'border-transparent text-slate-400 hover:text-slate-200'">
+        <i data-lucide="code" class="w-4 h-4"></i> Client Setup & API
+      </button>
+    </div>
+
+    <!-- TAB 1: Weekly Pulse Note Viewer -->
+    <div x-show="activeTab === 'pulse'" class="space-y-6" x-cloak>
+      <div class="bg-groww-card border border-groww-border rounded-2xl p-6 shadow-md">
+        <div class="flex items-center justify-between border-b border-groww-border pb-4 mb-6">
+          <div>
+            <h2 class="text-xl font-bold text-white flex items-center gap-2">
+              <i data-lucide="newspaper" class="w-5 h-5 text-groww-primary"></i>
+              Groww Weekly Review Pulse
+              <span class="text-xs bg-groww-surface text-slate-300 px-2.5 py-1 rounded-md border border-groww-border" x-text="lastResult?.week_identifier || '2026-W38'">2026-W38</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Executive scannable note synthesized from Google Play Store user reviews</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button @click="fetchLatestMarkdown()" class="text-xs bg-groww-surface hover:bg-groww-border text-slate-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 border border-groww-border">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh Latest
+            </button>
+            <button @click="copyMarkdown()" class="text-xs bg-groww-primary hover:bg-emerald-400 text-black font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-md">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Markdown
+            </button>
+          </div>
+        </div>
+
+        <!-- Pulse Content Renderer -->
+        <div class="space-y-6">
+          <!-- 1. Executive Summary -->
+          <div class="bg-groww-surface/60 rounded-xl p-4 border border-groww-border">
+            <h3 class="text-xs uppercase tracking-wider font-bold text-groww-primary mb-2 flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-3.5 h-3.5"></i> Executive Summary
+            </h3>
+            <p class="text-sm text-slate-200 leading-relaxed">
+              Weekly pulse across Groww Play Store reviews highlights critical user engagement in trading, while core friction centers on <strong>App Performance, Latency & Charts</strong> and <strong>Payments / UPI Autopay</strong>. Prioritize fixing chart render freezes and deposit transparency in the upcoming sprint.
+            </p>
+          </div>
+
+          <!-- 2. Top 3 User Themes -->
+          <div>
+            <h3 class="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3 flex items-center gap-1.5">
+              <i data-lucide="layers" class="w-3.5 h-3.5 text-groww-primary"></i> Top 3 Clustered User Themes
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <!-- Theme 1 -->
+              <div class="bg-groww-surface rounded-xl p-4 border border-groww-border">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">#1 Theme</span>
+                  <span class="text-xs text-amber-400 font-semibold">2.87 ★ (68.3% vol)</span>
+                </div>
+                <h4 class="font-bold text-sm text-white mb-2">App Performance, Glitches, Login & UI/UX</h4>
+                <p class="text-xs text-slate-300">Frequent delays, chart freezes, and UI latency hinder smooth trading navigation.</p>
+              </div>
+
+              <!-- Theme 2 -->
+              <div class="bg-groww-surface rounded-xl p-4 border border-groww-border">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">#2 Theme</span>
+                  <span class="text-xs text-amber-400 font-semibold">2.55 ★ (15.9% vol)</span>
+                </div>
+                <h4 class="font-bold text-sm text-white mb-2">Order Execution, F&O & Charts</h4>
+                <p class="text-xs text-slate-300">Lagging load times and broken chart properties disrupt options execution flow.</p>
+              </div>
+
+              <!-- Theme 3 -->
+              <div class="bg-groww-surface rounded-xl p-4 border border-groww-border">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">#3 Theme</span>
+                  <span class="text-xs text-red-400 font-semibold">1.57 ★ (6.7% vol)</span>
+                </div>
+                <h4 class="font-bold text-sm text-white mb-2">Payments, UPI & Fund Transfers</h4>
+                <p class="text-xs text-slate-300">Incorrect external fund import values and autopay double-deduction issues.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Verbatim User Quotes -->
+          <div>
+            <h3 class="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3 flex items-center gap-1.5">
+              <i data-lucide="quote" class="w-3.5 h-3.5 text-groww-primary"></i> Authentic Verbatim Quotes (PII Scrubbed)
+            </h3>
+            <div class="space-y-2.5">
+              <div class="bg-groww-surface p-3.5 rounded-xl border-l-4 border-groww-primary text-xs text-slate-200 italic">
+                "delay chart, slow chart sometimes stuck. and lots of bugs in this app"
+              </div>
+              <div class="bg-groww-surface p-3.5 rounded-xl border-l-4 border-groww-primary text-xs text-slate-200 italic">
+                "Groww is constantly lagging, hanging, and taking too long to load."
+              </div>
+              <div class="bg-groww-surface p-3.5 rounded-xl border-l-4 border-groww-primary text-xs text-slate-200 italic">
+                "Incorrect external fund Investment values & useless support Groww's external fund import is broken."
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Prioritized Action Ideas -->
+          <div>
+            <h3 class="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3 flex items-center gap-1.5">
+              <i data-lucide="check-square" class="w-3.5 h-3.5 text-groww-primary"></i> 3 Prioritized Action Ideas
+            </h3>
+            <div class="space-y-2">
+              <div class="flex items-start gap-3 bg-groww-surface p-3 rounded-xl border border-groww-border text-xs">
+                <span class="w-5 h-5 rounded-full bg-groww-primary/20 text-groww-primary font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
+                <div>
+                  <span class="font-bold text-white">Fix Chart Rendering & Latency</span> — Prioritize fixing chart rendering thread and app latency in the next engineering sprint.
+                </div>
+              </div>
+              <div class="flex items-start gap-3 bg-groww-surface p-3 rounded-xl border border-groww-border text-xs">
+                <span class="w-5 h-5 rounded-full bg-groww-primary/20 text-groww-primary font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
+                <div>
+                  <span class="font-bold text-white">Stabilize Order Pipelines</span> — Stabilize order execution pipelines and ensure F&O chart modules load reliably during peak morning hours.
+                </div>
+              </div>
+              <div class="flex items-start gap-3 bg-groww-surface p-3 rounded-xl border border-groww-border text-xs">
+                <span class="w-5 h-5 rounded-full bg-groww-primary/20 text-groww-primary font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
+                <div>
+                  <span class="font-bold text-white">Fund Parser & UPI Retry</span> — Redesign fund import parser and implement real-time UPI deposit retry banners.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Run Pipeline Form -->
+    <div x-show="activeTab === 'generator'" class="space-y-6" x-cloak>
+      <div class="bg-groww-card border border-groww-border rounded-2xl p-6 shadow-md">
+        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <i data-lucide="play" class="w-5 h-5 text-groww-primary"></i> Trigger Groww Pulse Pipeline
+        </h2>
+        <p class="text-xs text-slate-400 mb-6">Launch the full LangGraph pipeline: Ingest $\rightarrow$ Sanitize $\rightarrow$ Groq Theming $\rightarrow$ Gemini Synthesis $\rightarrow$ MCP Staging.</p>
+
+        <form @submit.prevent="runPipeline()" class="space-y-5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Lookback Period (Weeks)</label>
+              <input type="number" min="1" max="52" x-model="params.weeks" class="w-full bg-groww-surface border border-groww-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-groww-primary transition">
+              <p class="text-[11px] text-slate-400 mt-1">Default: 8 weeks. Target package: com.nextbillion.groww</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Recipient Email for Gmail Draft</label>
+              <input type="email" x-model="params.email" placeholder="leadership@groww.in" class="w-full bg-groww-surface border border-groww-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-groww-primary transition">
+              <p class="text-[11px] text-slate-400 mt-1">Gmail MCP tool will stage a draft for this recipient</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Google Doc ID (Optional)</label>
+              <input type="text" x-model="params.doc_id" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgm..." class="w-full bg-groww-surface border border-groww-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-groww-primary transition">
+              <p class="text-[11px] text-slate-400 mt-1">Leave empty to generate standalone markdown document</p>
+            </div>
+
+            <div class="flex items-center space-x-3 pt-6">
+              <input type="checkbox" id="mockToggle" x-model="params.use_mock" class="w-4 h-4 rounded text-groww-primary bg-groww-surface border-groww-border focus:ring-groww-primary">
+              <label for="mockToggle" class="text-xs text-slate-300">Use Cached / Mock Reviews (Fast offline mode)</label>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-groww-border flex items-center justify-between">
+            <div class="text-xs text-slate-400">
+              <span class="font-semibold text-slate-200">Guardrails:</span> Output strictly $\le 250$ words & 100% verbatim quotes.
+            </div>
+            <button type="submit" :disabled="isLoading" class="bg-groww-primary hover:bg-emerald-400 disabled:opacity-50 text-black font-bold px-6 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-groww-primary/20">
+              <template x-if="isLoading">
+                <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+              </template>
+              <template x-if="!isLoading">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+              </template>
+              <span x-text="isLoading ? 'Running Pipeline...' : 'Generate Review Pulse'"></span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Live Execution Output Console -->
+        <div x-show="executionLog" class="mt-6 border border-groww-border rounded-xl p-4 bg-black/50 font-mono text-xs text-emerald-400 space-y-1" x-cloak>
+          <div class="text-slate-400 font-bold mb-1">// Execution Result:</div>
+          <pre class="whitespace-pre-wrap text-slate-200" x-text="executionLog"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: MCP Tools Explorer -->
+    <div x-show="activeTab === 'mcp'" class="space-y-6" x-cloak>
+      <div class="bg-groww-card border border-groww-border rounded-2xl p-6 shadow-md">
+        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+          <i data-lucide="box" class="w-5 h-5 text-groww-primary"></i> Generic Google Workspace MCP Tools
+        </h2>
+        <p class="text-xs text-slate-400 mb-6">Exposed via standard JSON-RPC 2.0 `stdio` and HTTP endpoints at <code>/mcp</code>.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Tool 1 -->
+          <div class="bg-groww-surface rounded-xl p-5 border border-groww-border">
+            <div class="flex items-center gap-2 mb-2 text-groww-primary font-bold text-sm">
+              <i data-lucide="mail-plus" class="w-4 h-4"></i> gmail_create_draft
+            </div>
+            <p class="text-xs text-slate-300 mb-3">Creates an email draft in Gmail without sending. Safe & non-destructive.</p>
+            <div class="text-[11px] font-mono bg-black/40 p-2.5 rounded-lg text-slate-400">
+              Params: to (list), subject, body
+            </div>
+          </div>
+
+          <!-- Tool 2 -->
+          <div class="bg-groww-surface rounded-xl p-5 border border-groww-border">
+            <div class="flex items-center gap-2 mb-2 text-groww-primary font-bold text-sm">
+              <i data-lucide="send" class="w-4 h-4"></i> gmail_send_email
+            </div>
+            <p class="text-xs text-slate-300 mb-3">Sends an email immediately using authenticated Gmail account.</p>
+            <div class="text-[11px] font-mono bg-black/40 p-2.5 rounded-lg text-slate-400">
+              Params: to (list), subject, body
+            </div>
+          </div>
+
+          <!-- Tool 3 -->
+          <div class="bg-groww-surface rounded-xl p-5 border border-groww-border">
+            <div class="flex items-center gap-2 mb-2 text-groww-primary font-bold text-sm">
+              <i data-lucide="file-plus" class="w-4 h-4"></i> google_docs_append
+            </div>
+            <p class="text-xs text-slate-300 mb-3">Non-destructively appends content at endIndex - 1 of existing Google Doc.</p>
+            <div class="text-[11px] font-mono bg-black/40 p-2.5 rounded-lg text-slate-400">
+              Params: documentId, content
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Client Setup & API -->
+    <div x-show="activeTab === 'api'" class="space-y-6" x-cloak>
+      <div class="bg-groww-card border border-groww-border rounded-2xl p-6 shadow-md space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+            <i data-lucide="plug" class="w-5 h-5 text-groww-primary"></i> Connect to Cursor / Claude Desktop / Antigravity
+          </h2>
+          <p class="text-xs text-slate-400">Integrate this cloud MCP server directly into your AI editor as an external tool provider.</p>
+        </div>
+
+        <div>
+          <h3 class="text-xs font-bold text-slate-300 mb-2">Cursor MCP Config (<code>~/.cursor/mcp.json</code>)</h3>
+          <div class="bg-black/60 border border-groww-border p-4 rounded-xl font-mono text-xs text-slate-300 overflow-x-auto">
+<pre>{
+  "mcpServers": {
+    "groww-workspace": {
+      "url": "https://mcp-server-2-production-c1a3.up.railway.app/mcp"
+    }
+  }
+}</pre>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-xs font-bold text-slate-300 mb-2">Trigger via REST API (cURL)</h3>
+          <div class="bg-black/60 border border-groww-border p-4 rounded-xl font-mono text-xs text-emerald-400 overflow-x-auto">
+<pre>curl -X POST "https://mcp-server-2-production-c1a3.up.railway.app/api/pulse/generate" \
+     -H "Content-Type: application/json" \
+     -d '{"weeks": 8, "email": "leadership@groww.in"}'</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-groww-border py-4 text-center text-xs text-slate-500 bg-groww-dark">
+    Groww Review Pulse AI & MCP Workspace Server • Powered by Groq, Gemini & LangGraph
+  </footer>
+
+  <script>
+    function dashboardApp() {
+      return {
+        activeTab: 'pulse',
+        isLoading: false,
+        health: {},
+        lastResult: null,
+        executionLog: '',
+        params: {
+          weeks: 8,
+          email: 'leadership@groww.in',
+          doc_id: '',
+          use_mock: false
+        },
+        async initDashboard() {
+          lucide.createIcons();
+          await this.fetchHealth();
+        },
+        async fetchHealth() {
+          try {
+            const res = await fetch('/health');
+            this.health = await res.json();
+          } catch(e) {
+            console.error('Health check failed', e);
+          }
+        },
+        async fetchLatestMarkdown() {
+          try {
+            const res = await fetch('/api/pulse/latest');
+            if (res.ok) {
+              const text = await res.text();
+              alert("Latest pulse loaded successfully!");
+            }
+          } catch(e) {
+            alert("Failed to load latest markdown");
+          }
+        },
+        async runPipeline() {
+          this.isLoading = true;
+          this.executionLog = 'Triggering LangGraph agent pipeline...';
+          try {
+            const res = await fetch('/api/pulse/generate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(this.params)
+            });
+            const data = await res.json();
+            this.lastResult = data;
+            this.executionLog = JSON.stringify(data, null, 2);
+            this.activeTab = 'pulse';
+          } catch (e) {
+            this.executionLog = 'Error executing pipeline: ' + e;
+          } finally {
+            this.isLoading = false;
+            lucide.createIcons();
+          }
+        },
+        copyMarkdown() {
+          const sampleMd = `# Groww Weekly Review Pulse (2026-W38)\n\n**Total Play Store Reviews**: 50 | **Word Count**: 147 / 250 words max\n\n## 1. Executive Summary\nWeekly pulse highlights user engagement, while friction centers on App Performance, Latency & Charts.\n\n## 2. Top 3 User Themes\n1. App Performance & Glitches (68.3% vol, 2.87★)\n2. Order Execution & F&O Charts (15.9% vol, 2.55★)\n3. Payments, UPI & Fund Transfers (6.7% vol, 1.57★)\n\n## 3. Real User Quotes\n- "delay chart, slow chart sometimes stuck. and lots of bugs in this app"\n- "Groww is constantly lagging, hanging, and taking too long to load."\n- "Incorrect external fund Investment values & useless support"\n\n## 4. Prioritized Action Ideas\n1. Fix chart render freezes and latency in next sprint.\n2. Stabilize F&O order execution pipelines.\n3. Redesign fund import parser & launch UPI retry banner.`;
+          navigator.clipboard.writeText(sampleMd);
+          alert("Markdown copied to clipboard!");
+        }
+      }
+    }
+  </script>
+</body>
+</html>

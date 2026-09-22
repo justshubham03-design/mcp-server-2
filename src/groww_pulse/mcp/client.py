@@ -8,26 +8,67 @@ logger = logging.getLogger(__name__)
 
 class MCPClient:
     """
-    Model Context Protocol (MCP) client communicating via JSON-RPC 2.0 stdio protocol.
+    Model Context Protocol (MCP) client communicating via HTTP or JSON-RPC 2.0 stdio protocol.
     Includes built-in local file backup engine for offline/dry-run resilience.
     """
-    def __init__(self, server_command: Optional[str] = None, output_dir: str = "./output"):
-        self.server_command = server_command
+    def __init__(
+        self,
+        server_command: Optional[str] = None,
+        server_url: Optional[str] = None,
+        output_dir: str = "./output"
+    ):
+        self.server_command = server_command or os.getenv("MCP_SERVER_COMMAND")
+        self.server_url = server_url or os.getenv("MCP_SERVER_URL") or os.getenv("RAILWAY_URL")
         self.output_dir = output_dir
         os.makedirs(self.output_dir, exist_ok=True)
 
     async def call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Executes an MCP tool call via JSON-RPC. If no live MCP server is running or if stdio fails,
-        it uses the local fallback engine to generate the deliverable locally.
+        Executes an MCP tool call via Remote HTTP or local stdio JSON-RPC. If no live MCP server
+        is available or if requests fail, it uses the local fallback engine.
         """
+        if self.server_url:
+            try:
+                return await self._call_http_tool(tool_name, arguments)
+            except Exception as e:
+                logger.warning(f"Remote HTTP MCP server ({self.server_url}) call failed ({e}). Falling back.")
+
         if self.server_command:
             try:
                 return await self._call_stdio_tool(tool_name, arguments)
             except Exception as e:
-                logger.warning(f"Live MCP server call failed ({e}). Falling back to local MCP engine.")
+                logger.warning(f"Live stdio MCP server call failed ({e}). Falling back to local MCP engine.")
 
         return self._local_fallback_call(tool_name, arguments)
+
+    async def _call_http_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Dispatches JSON-RPC message to a remote MCP HTTP endpoint (e.g. Railway)."""
+        import httpx
+        url = self.server_url.rstrip("/")
+        if not url.endswith("/mcp") and not url.endswith("/api/mcp/rpc"):
+            endpoint = f"{url}/mcp"
+        else:
+            endpoint = url
+
+        request_payload = {
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/call",
+            "params": {
+                "name": tool_name,
+                "arguments": arguments
+            }
+        }
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(endpoint, json=request_payload)
+            resp.raise_for_status()
+            data = resp.json()
+
+        if "error" in data:
+            raise RuntimeError(f"Remote MCP server returned error: {data['error']}")
+
+        return data.get("result", {})
 
     async def _call_stdio_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Dispatches JSON-RPC message to an external MCP server subprocess."""

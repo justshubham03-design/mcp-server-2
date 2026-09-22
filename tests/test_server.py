@@ -34,3 +34,28 @@ def test_latest_pulse_endpoint():
         assert "# Groww Weekly Review Pulse" in response.text
     else:
         assert response.status_code == 404
+
+def test_mcp_jsonrpc_endpoint():
+    rpc_req = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/list",
+        "params": {}
+    }
+    response = client.post("/mcp", json=rpc_req)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["jsonrpc"] == "2.0"
+    assert data["id"] == 1
+    tool_names = [t["name"] for t in data["result"]["tools"]]
+    assert "gmail_create_draft" in tool_names
+
+def test_mcp_call_rest_endpoint_validation():
+    response = client.post(
+        "/api/mcp/call/gmail_create_draft",
+        json={"to": ["invalid-email"], "subject": "Test", "body": "Body"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data.get("isError") is True
+    assert "INVALID_RECIPIENT" in data.get("content", [{}])[0].get("text", "")

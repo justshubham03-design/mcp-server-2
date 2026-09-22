@@ -69,6 +69,29 @@ def list_mcp_tools():
     server = MCPServer()
     return {"tools": server.get_tool_definitions()}
 
+@app.post("/mcp")
+@app.post("/api/mcp/rpc")
+async def handle_mcp_rpc(request: dict):
+    """Standard JSON-RPC 2.0 MCP endpoint over HTTP."""
+    server = MCPServer()
+    return await server.handle_request(request)
+
+@app.post("/api/mcp/call/{tool_name}")
+async def call_mcp_tool_rest(tool_name: str, arguments: dict):
+    """REST wrapper to execute an MCP tool call directly."""
+    server = MCPServer()
+    rpc_req = {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "tools/call",
+        "params": {
+            "name": tool_name,
+            "arguments": arguments
+        }
+    }
+    res = await server.handle_request(rpc_req)
+    return res.get("result", {})
+
 @app.get("/api/pulse/latest")
 def get_latest_pulse():
     """Returns the most recently generated pulse markdown document."""

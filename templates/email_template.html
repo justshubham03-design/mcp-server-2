@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 24px; line-height: 1.6; }
+    .container { max-width: 640px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }
+    .header { background: #00d09c; padding: 24px; color: #ffffff; }
+    .header h1 { margin: 0 0 6px 0; font-size: 20px; font-weight: 700; }
+    .header p { margin: 0; font-size: 13px; opacity: 0.95; }
+    .content { padding: 24px; }
+    .section-title { font-size: 15px; font-weight: 700; color: #0f172a; margin-top: 20px; margin-bottom: 10px; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px; }
+    .theme-card { background: #f8fafc; border-left: 4px solid #00d09c; padding: 10px 14px; margin-bottom: 10px; border-radius: 0 6px 6px 0; }
+    .theme-title { font-weight: 600; font-size: 14px; color: #0f172a; }
+    .theme-metric { font-size: 12px; color: #64748b; font-weight: 500; }
+    .theme-desc { font-size: 13px; color: #334155; margin-top: 4px; }
+    .quote-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px 14px; margin-bottom: 10px; font-style: italic; font-size: 13px; color: #78350f; border-radius: 0 6px 6px 0; }
+    .action-item { font-size: 13px; color: #1e293b; margin-bottom: 8px; }
+    .btn { display: inline-block; background-color: #00d09c; color: #ffffff !important; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-top: 16px; }
+    .footer { padding: 16px 24px; font-size: 12px; color: #94a3b8; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Groww Weekly Review Pulse</h1>
+      <p>{{ week_identifier }} &bull; {{ total_reviews_analyzed }} Reviews Analyzed</p>
+    </div>
+    <div class="content">
+      <p style="font-size: 14px; margin-top: 0;">{{ executive_summary }}</p>
+
+      <div class="section-title">Top 3 User Themes</div>
+      {% for theme in top_themes %}
+      <div class="theme-card">
+        <div class="theme-title">#{{ theme.rank }} {{ theme.name }}</div>
+        <div class="theme-metric">{{ theme.metric }}</div>
+        <div class="theme-desc">{{ theme.summary }}</div>
+      </div>
+      {% endfor %}
+
+      <div class="section-title">Authentic User Quotes</div>
+      {% for quote in verbatim_quotes %}
+      <div class="quote-box">
+        "{{ quote }}"
+      </div>
+      {% endfor %}
+
+      <div class="section-title">3 Action Ideas</div>
+      <ol style="padding-left: 20px; margin: 0;">
+        {% for action in action_ideas %}
+        <li class="action-item"><strong>{{ action }}</strong></li>
+        {% endfor %}
+      </ol>
+
+      {% if doc_url %}
+      <div style="text-align: center; margin-top: 24px;">
+        <a href="{{ doc_url }}" class="btn" target="_blank">Open Full Note in Google Docs &rarr;</a>
+      </div>
+      {% endif %}
+    </div>
+    <div class="footer">
+      Generated automatically by Groww Review Pulse AI Agent.
+    </div>
+  </div>
+</body>
+</html>

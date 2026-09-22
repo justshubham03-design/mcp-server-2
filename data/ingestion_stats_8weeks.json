@@ -1,0 +1,22 @@
+{
+  "package_id": "com.nextbillion.groww",
+  "weeks_lookback": 8,
+  "extracted_at": "2026-09-19T18:05:12.595329+00:00",
+  "total_raw_reviews": 50,
+  "total_sanitized_reviews": 50,
+  "noise_dropped_count": 0,
+  "pii_redacted_count": 3,
+  "date_range": {
+    "earliest": "2026-08-05T18:05:12.591782+00:00",
+    "latest": "2026-09-19T18:05:12.591782+00:00"
+  },
+  "rating_distribution": {
+    "1": 21,
+    "2": 13,
+    "3": 0,
+    "4": 0,
+    "5": 16
+  },
+  "raw_file": "data/reviews_raw_8weeks.json",
+  "sanitized_file": "data/reviews_sanitized_8weeks.json"
+}

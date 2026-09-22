@@ -1,0 +1,63 @@
+app:
+  name: "Groww Review Pulse AI"
+  version: "0.1.0"
+  target_package_id: "com.nextbillion.groww"
+  target_country: "in"
+  target_language: "en"
+
+ingestion:
+  default_lookback_weeks: 8
+  min_lookback_weeks: 8
+  max_lookback_weeks: 12
+  max_reviews: 1000
+  batch_size: 200
+
+sanitization:
+  min_review_words: 8
+  strip_emojis: true
+  filter_one_word_reviews: true
+  redact_pii: true
+
+theming:
+  max_themes: 5
+  top_themes_in_pulse: 3
+  taxonomy:
+    - id: "kyc_onboarding"
+      name: "KYC, Onboarding & Account Opening"
+      keywords: ["kyc", "verification", "aadhaar", "pan", "account opening", "rejected", "document", "signature"]
+    - id: "payments_settlement"
+      name: "Payments, UPI, Fund Transfers & Withdrawals"
+      keywords: ["upi", "deposit", "withdraw", "withdrawal", "funds", "money deducted", "bank transfer", "autopay", "mandate"]
+    - id: "trading_execution"
+      name: "Order Execution, F&O, Stock Trading & Charts"
+      keywords: ["charts", "f&o", "options", "stoploss", "order rejected", "latency", "market order", "candlestick", "nifty"]
+    - id: "mutual_funds_statements"
+      name: "Mutual Funds, SIPs & Account Statements / P&L"
+      keywords: ["sip", "mutual fund", "nav", "portfolio", "p&l", "statement", "tax report", "capital gains", "dividend"]
+    - id: "app_performance_ui"
+      name: "App Performance, Glitches, Login & UI/UX"
+      keywords: ["crash", "lag", "login", "otp", "slow", "freeze", "ui", "update", "black screen", "fingerprint"]
+
+llm:
+  # Phase 2: Synthesis & Theming Engine
+  phase2:
+    provider: "groq"
+    model: "llama-3.3-70b-versatile"
+    temperature: 0.2
+    rpm_limit: 30
+  # Phase 3: LangGraph Agent Core Orchestrator
+  phase3:
+    provider: "gemini"
+    model: "gemini-3.6-flash"
+    temperature: 0.2
+    rpm_limit: 15
+
+pulse:
+  max_words: 250
+  required_verbatim_quotes: 3
+  required_action_ideas: 3
+
+mcp:
+  enable_fallback_local_export: true
+  docs_title_prefix: "Groww Weekly Review Pulse"
+  gmail_subject_prefix: "[Weekly Pulse] Groww User Feedback & Action Items"

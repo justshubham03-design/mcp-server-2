@@ -39,10 +39,16 @@ from fastapi.responses import JSONResponse, PlainTextResponse, HTMLResponse
 @app.get("/", response_class=HTMLResponse)
 def root():
     """Serves the Groww Review Pulse AI web dashboard."""
-    template_path = Path(__file__).parent.parent / "templates" / "dashboard.html"
-    if template_path.exists():
-        return HTMLResponse(content=template_path.read_text(encoding="utf-8"))
-    return HTMLResponse(content="<h1>Groww Review Pulse AI is Running</h1>")
+    possible_paths = [
+        Path(__file__).resolve().parent.parent / "templates" / "dashboard.html",
+        Path("templates/dashboard.html").resolve(),
+        Path("/app/templates/dashboard.html"),
+        Path("./templates/dashboard.html")
+    ]
+    for p in possible_paths:
+        if p.exists():
+            return HTMLResponse(content=p.read_text(encoding="utf-8"))
+    return HTMLResponse(content="<h1>Groww Review Pulse AI is Running</h1><p>Dashboard template loading...</p>")
 
 @app.get("/api/info")
 def api_info():

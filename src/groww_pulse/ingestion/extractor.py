@@ -7,7 +7,6 @@ from typing import Dict, Any, Tuple, List
 
 from .play_store import PlayStoreIngestion
 from .models import ReviewItem
-from ..sanitization.pii_cleaner import PIISanitizer, SanitizedReview
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +34,7 @@ def download_and_extract_8weeks(
     )
 
     # 2. Sanitize reviews
+    from ..sanitization.pii_cleaner import PIISanitizer, SanitizedReview
     sanitizer = PIISanitizer(min_words=8, strip_emojis=True, filter_noise=True, redact_pii=True)
     sanitized_reviews = sanitizer.sanitize_reviews(raw_reviews)
 

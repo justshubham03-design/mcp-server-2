@@ -120,8 +120,8 @@ class MCPClient:
             # Attempt live Google Docs append if doc_id is available
             if doc_id_arg:
                 try:
-                    from ...mcp_server.services.docs_service import GoogleDocsService
-                    from ...mcp_server.schemas.tool_schemas import GoogleDocsAppendInput
+                    from src.mcp_server.services.docs_service import GoogleDocsService
+                    from src.mcp_server.schemas.tool_schemas import GoogleDocsAppendInput
                     docs_service = GoogleDocsService()
                     docs_service.append_content(GoogleDocsAppendInput(documentId=doc_id_arg, content=content))
                     logger.info(f"[Live MCP Docs] Appended pulse notes to Google Doc: {doc_id_arg}")
@@ -155,8 +155,8 @@ class MCPClient:
 
             # Attempt live Gmail draft creation if authenticated
             try:
-                from ...mcp_server.services.gmail_service import GmailService
-                from ...mcp_server.schemas.tool_schemas import GmailCreateDraftInput
+                from src.mcp_server.services.gmail_service import GmailService
+                from src.mcp_server.schemas.tool_schemas import GmailCreateDraftInput
                 gmail_service = GmailService()
                 live_res = gmail_service.create_draft(GmailCreateDraftInput(
                     to=to_list,
@@ -188,8 +188,8 @@ class MCPClient:
             body_html = arguments.get("body_html") or arguments.get("body", "")
 
             try:
-                from ...mcp_server.services.gmail_service import GmailService
-                from ...mcp_server.schemas.tool_schemas import GmailSendEmailInput
+                from src.mcp_server.services.gmail_service import GmailService
+                from src.mcp_server.schemas.tool_schemas import GmailSendEmailInput
                 gmail_service = GmailService()
                 live_res = gmail_service.send_email(GmailSendEmailInput(
                     to=to_list,

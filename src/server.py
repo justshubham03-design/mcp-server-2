@@ -73,7 +73,14 @@ def health_check():
     """Railway health check endpoint."""
     has_groq = bool(os.getenv("GROQ_API_KEY"))
     has_gemini = bool(os.getenv("GEMINI_API_KEY"))
-    has_google_token = bool(os.getenv("GOOGLE_TOKEN_JSON") or os.getenv("GOOGLE_TOKEN_BASE64") or os.path.exists("./.config/google_token.json"))
+    has_google_token = False
+    try:
+        from src.mcp_server.auth.google_auth import GoogleAuthManager
+        auth = GoogleAuthManager()
+        creds = auth.get_credentials()
+        has_google_token = creds is not None and (creds.valid or bool(creds.refresh_token))
+    except Exception:
+        has_google_token = bool(os.getenv("GOOGLE_TOKEN_JSON") or os.getenv("GOOGLE_TOKEN_BASE64") or os.path.exists("./.config/google_token.json"))
 
     return {
         "status": "healthy",
@@ -190,6 +197,9 @@ async def generate_pulse(req: PulseRequest):
             "word_count": val_res.get("total_word_count", 0),
             "validation_passed": val_res.get("is_valid", False),
             "top_themes": [t.get("theme_name") for t in pulse.get("top_themes", [])] if pulse else [],
+            "pulse": pulse,
+            "markdown_content": final_state.get("markdown_content"),
+            "html_email_content": final_state.get("html_email_content"),
             "draft_id": final_state.get("draft_id"),
             "sent_message_id": sent_message_id,
             "doc_url": final_state.get("doc_url")

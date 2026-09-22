@@ -57,12 +57,24 @@ class GoogleAuthManager:
             except Exception as e:
                 logger.warning(f"Failed to load credentials from GOOGLE_TOKEN_JSON: {e}")
 
-        # 2. Check existing token file
-        if not creds and os.path.exists(self.token_path):
-            try:
-                creds = Credentials.from_authorized_user_file(self.token_path, SCOPES)
-            except Exception as e:
-                logger.warning(f"Failed to read existing token file at {self.token_path}: {e}")
+        # 2. Check existing token file across possible locations
+        if not creds:
+            possible_paths = [
+                Path(self.token_path),
+                Path(__file__).resolve().parent.parent.parent.parent / self.token_path,
+                Path("./.config/google_token.json").resolve(),
+                Path(".config/google_token.json"),
+                Path.home() / ".config" / "google-mcp" / "token.json"
+            ]
+            for p in possible_paths:
+                if p.exists() and p.is_file():
+                    try:
+                        creds = Credentials.from_authorized_user_file(str(p), SCOPES)
+                        self.token_path = str(p)
+                        logger.info(f"Loaded valid Google OAuth token from {p}")
+                        break
+                    except Exception as e:
+                        logger.warning(f"Failed to read existing token file at {p}: {e}")
 
         # 2. Check validity and refresh if expired
         if creds and creds.expired and creds.refresh_token:

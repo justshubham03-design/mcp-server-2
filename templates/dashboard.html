@@ -250,31 +250,36 @@
     <!-- TAB 2: Weekly Pulse Note Viewer -->
     <div x-show="activeTab === 'pulse'" class="space-y-6" x-cloak>
       <div class="bg-groww-card border border-groww-border rounded-2xl p-6 shadow-md">
-        <div class="flex items-center justify-between border-b border-groww-border pb-4 mb-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-groww-border pb-4 mb-6 gap-4">
           <div>
             <h2 class="text-xl font-bold text-white flex items-center gap-2">
               <i data-lucide="newspaper" class="w-5 h-5 text-groww-primary"></i>
               Groww Weekly Review Pulse
-              <span class="text-xs bg-groww-surface text-slate-300 px-2.5 py-1 rounded-md border border-groww-border" x-text="lastResult?.week_identifier || '2026-W38'">2026-W38</span>
+              <span class="text-xs bg-groww-surface text-slate-300 px-2.5 py-1 rounded-md border border-groww-border font-mono" x-text="lastResult?.week_identifier || (pulseData ? pulseData.week_identifier : '2026-W39')">2026-W39</span>
             </h2>
             <p class="text-xs text-slate-400 mt-1">Executive scannable note synthesized from Google Play Store user reviews</p>
           </div>
-          <div class="flex items-center gap-3">
-            <button @click="copyMarkdown()" class="text-xs bg-groww-primary hover:bg-emerald-400 text-black font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-md">
-              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Markdown
+          <div class="flex items-center gap-2">
+            <div class="flex bg-groww-surface border border-groww-border rounded-xl p-1 text-xs">
+              <button @click="pulseView = 'cards'" class="px-3 py-1.5 rounded-lg transition" :class="pulseView === 'cards' ? 'bg-groww-primary text-black font-bold' : 'text-slate-400 hover:text-white'">Cards</button>
+              <button @click="pulseView = 'email'" class="px-3 py-1.5 rounded-lg transition" :class="pulseView === 'email' ? 'bg-groww-primary text-black font-bold' : 'text-slate-400 hover:text-white'">Email Preview</button>
+              <button @click="pulseView = 'markdown'" class="px-3 py-1.5 rounded-lg transition" :class="pulseView === 'markdown' ? 'bg-groww-primary text-black font-bold' : 'text-slate-400 hover:text-white'">Markdown</button>
+            </div>
+            <button @click="copyMarkdown()" class="text-xs bg-groww-primary hover:bg-emerald-400 text-black font-semibold px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-md">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy MD
             </button>
           </div>
         </div>
 
-        <!-- Pulse Content Renderer -->
-        <div class="space-y-6">
+        <!-- VIEW 1: Cards View -->
+        <div x-show="pulseView === 'cards'" class="space-y-6">
           <!-- 1. Executive Summary -->
           <div class="bg-groww-surface/60 rounded-xl p-4 border border-groww-border">
             <h3 class="text-xs uppercase tracking-wider font-bold text-groww-primary mb-2 flex items-center gap-1.5">
               <i data-lucide="zap" class="w-3.5 h-3.5"></i> Executive Summary
             </h3>
-            <p class="text-sm text-slate-200 leading-relaxed">
-              Weekly pulse across Groww Play Store reviews highlights critical user engagement in trading, while core friction centers on <strong>App Performance, Latency & Charts</strong> and <strong>Payments / UPI Autopay</strong>. Prioritize fixing chart render freezes and deposit transparency in the upcoming sprint.
+            <p class="text-sm text-slate-200 leading-relaxed" x-text="getPulse().executive_summary">
+              Weekly pulse across Groww Play Store reviews highlights critical user engagement in trading, while core friction centers on App Performance, Glitches, Login & UI/UX. Prioritize deposit transparency and verification clarity.
             </p>
           </div>
 
@@ -284,53 +289,32 @@
               <i data-lucide="layers" class="w-3.5 h-3.5 text-groww-primary"></i> Top 3 Clustered User Themes
             </h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <!-- Theme 1 -->
-              <div class="bg-groww-surface rounded-xl p-4 border border-groww-border">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">#1 Theme</span>
-                  <span class="text-xs text-amber-400 font-semibold">2.87 ★ (68.3% vol)</span>
+              <template x-for="(theme, idx) in getPulse().top_themes" :key="idx">
+                <div class="bg-groww-surface rounded-xl p-4 border border-groww-border flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full" x-text="'#' + (theme.rank || (idx+1)) + ' Theme'"></span>
+                      <span class="text-xs text-amber-400 font-semibold" x-text="theme.metric"></span>
+                    </div>
+                    <h4 class="font-bold text-sm text-white mb-2" x-text="theme.name || theme.theme_name"></h4>
+                    <p class="text-xs text-slate-300" x-text="theme.summary"></p>
+                  </div>
                 </div>
-                <h4 class="font-bold text-sm text-white mb-2">App Performance, Glitches, Login & UI/UX</h4>
-                <p class="text-xs text-slate-300">Frequent delays, chart freezes, and UI latency hinder smooth trading navigation.</p>
-              </div>
-
-              <!-- Theme 2 -->
-              <div class="bg-groww-surface rounded-xl p-4 border border-groww-border">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">#2 Theme</span>
-                  <span class="text-xs text-amber-400 font-semibold">2.55 ★ (15.9% vol)</span>
-                </div>
-                <h4 class="font-bold text-sm text-white mb-2">Order Execution, F&O & Charts</h4>
-                <p class="text-xs text-slate-300">Lagging load times and broken chart properties disrupt options execution flow.</p>
-              </div>
-
-              <!-- Theme 3 -->
-              <div class="bg-groww-surface rounded-xl p-4 border border-groww-border">
-                <div class="flex items-center justify-between mb-2">
-                  <span class="text-xs font-bold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">#3 Theme</span>
-                  <span class="text-xs text-red-400 font-semibold">1.57 ★ (6.7% vol)</span>
-                </div>
-                <h4 class="font-bold text-sm text-white mb-2">Payments, UPI & Fund Transfers</h4>
-                <p class="text-xs text-slate-300">Incorrect external fund import values and autopay double-deduction issues.</p>
-              </div>
+              </template>
             </div>
           </div>
 
           <!-- 3. Verbatim User Quotes -->
           <div>
             <h3 class="text-xs uppercase tracking-wider font-bold text-slate-400 mb-3 flex items-center gap-1.5">
-              <i data-lucide="quote" class="w-3.5 h-3.5 text-groww-primary"></i> Authentic Verbatim Quotes (PII Scrubbed)
+              <i data-lucide="quote" class="w-3.5 h-3.5 text-groww-primary"></i> Authentic Verbatim Quotes (PII Scrubbed & Grounded)
             </h3>
             <div class="space-y-2.5">
-              <div class="bg-groww-surface p-3.5 rounded-xl border-l-4 border-groww-primary text-xs text-slate-200 italic">
-                "delay chart, slow chart sometimes stuck. and lots of bugs in this app"
-              </div>
-              <div class="bg-groww-surface p-3.5 rounded-xl border-l-4 border-groww-primary text-xs text-slate-200 italic">
-                "Groww is constantly lagging, hanging, and taking too long to load."
-              </div>
-              <div class="bg-groww-surface p-3.5 rounded-xl border-l-4 border-groww-primary text-xs text-slate-200 italic">
-                "Incorrect external fund Investment values & useless support Groww's external fund import is broken."
-              </div>
+              <template x-for="(quote, qIdx) in getPulse().verbatim_quotes" :key="qIdx">
+                <div class="bg-groww-surface p-3.5 rounded-xl border-l-4 border-amber-400 text-xs text-amber-100 italic">
+                  "<span x-text="quote"></span>"
+                </div>
+              </template>
             </div>
           </div>
 
@@ -340,27 +324,32 @@
               <i data-lucide="check-square" class="w-3.5 h-3.5 text-groww-primary"></i> 3 Prioritized Action Ideas
             </h3>
             <div class="space-y-2">
-              <div class="flex items-start gap-3 bg-groww-surface p-3 rounded-xl border border-groww-border text-xs">
-                <span class="w-5 h-5 rounded-full bg-groww-primary/20 text-groww-primary font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-                <div>
-                  <span class="font-bold text-white">Fix Chart Rendering & Latency</span> — Prioritize fixing chart rendering thread and app latency in the next engineering sprint.
+              <template x-for="(action, aIdx) in getPulse().action_ideas" :key="aIdx">
+                <div class="flex items-start gap-3 bg-groww-surface p-3 rounded-xl border border-groww-border text-xs">
+                  <span class="w-5 h-5 rounded-full bg-groww-primary/20 text-groww-primary font-bold flex items-center justify-center shrink-0 mt-0.5" x-text="aIdx + 1"></span>
+                  <div class="text-slate-200 font-medium" x-text="action"></div>
                 </div>
-              </div>
-              <div class="flex items-start gap-3 bg-groww-surface p-3 rounded-xl border border-groww-border text-xs">
-                <span class="w-5 h-5 rounded-full bg-groww-primary/20 text-groww-primary font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-                <div>
-                  <span class="font-bold text-white">Stabilize Order Pipelines</span> — Stabilize order execution pipelines and ensure F&O chart modules load reliably during peak morning hours.
-                </div>
-              </div>
-              <div class="flex items-start gap-3 bg-groww-surface p-3 rounded-xl border border-groww-border text-xs">
-                <span class="w-5 h-5 rounded-full bg-groww-primary/20 text-groww-primary font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-                <div>
-                  <span class="font-bold text-white">Fund Parser & UPI Retry</span> — Redesign fund import parser and implement real-time UPI deposit retry banners.
-                </div>
-              </div>
+              </template>
             </div>
           </div>
         </div>
+
+        <!-- VIEW 2: Clean HTML Email Live Preview -->
+        <div x-show="pulseView === 'email'" class="space-y-4">
+          <div class="text-xs text-slate-400 flex items-center justify-between bg-groww-surface p-3 rounded-xl border border-groww-border">
+            <span>📧 Live HTML Email Preview (matches delivered Gmail format):</span>
+            <span class="text-emerald-400 font-semibold text-[11px]">Inline CSS Styled</span>
+          </div>
+          <div class="rounded-xl overflow-hidden border border-slate-700 bg-slate-100 p-4 min-h-[500px]">
+            <iframe :srcdoc="getEmailHtml()" class="w-full min-h-[600px] border-0 rounded-lg shadow-inner bg-slate-100"></iframe>
+          </div>
+        </div>
+
+        <!-- VIEW 3: Markdown Document Preview -->
+        <div x-show="pulseView === 'markdown'" class="space-y-4">
+          <div class="bg-black/80 rounded-xl p-4 font-mono text-xs text-slate-200 border border-groww-border overflow-x-auto whitespace-pre-wrap" x-text="getMarkdown()"></div>
+        </div>
+
       </div>
     </div>
 
@@ -454,9 +443,11 @@
     function dashboardApp() {
       return {
         activeTab: 'generator',
+        pulseView: 'cards',
         isLoading: false,
         health: {},
         lastResult: null,
+        pulseData: null,
         executionLog: '',
         successBanner: null,
         params: {
@@ -478,10 +469,50 @@
             console.error('Health check failed', e);
           }
         },
+        getPulse() {
+          if (this.lastResult?.pulse) {
+            return this.lastResult.pulse;
+          }
+          return {
+            week_identifier: '2026-W39',
+            total_reviews_analyzed: 207,
+            word_count: 147,
+            executive_summary: "Weekly pulse across 207 Play Store reviews indicates solid engagement, while user friction centers on App Performance, Glitches, Login & UI/UX. Prioritize deposit transparency and verification clarity.",
+            top_themes: [
+              { rank: 1, name: "App Performance, Glitches, Login & UI/UX", metric: "69.6% vol • 2.90★", summary: "Frequent chart delays, loading hangs, and occasional UI login latency." },
+              { rank: 2, name: "Order Execution, F&O, Stock Trading & Charts", metric: "15.9% vol • 2.52★", summary: "Lagging chart rendering and options chain latency during morning trading." },
+              { rank: 3, name: "Payments, UPI, Fund Transfers & Withdrawals", metric: "6.8% vol • 1.57★", summary: "Incorrect external fund import values and auto-debit retry confusion." }
+            ],
+            verbatim_quotes: [
+              "delay chart, slow chart sometimes stuck. and lots of bugs in this app",
+              "Groww is constantly lagging, hanging, and taking too long to load.",
+              "Incorrect external fund Investment values & useless support Groww's external fund import is broken."
+            ],
+            action_ideas: [
+              "Deploy biometric login fallback and isolate crash handler.",
+              "Optimize WebSocket latency for option chain charts.",
+              "Implement real-time UPI retry banner on deposit screen."
+            ]
+          };
+        },
+        getEmailHtml() {
+          if (this.lastResult?.html_email_content) {
+            return this.lastResult.html_email_content;
+          }
+          const p = this.getPulse();
+          return `<!DOCTYPE html><html><body style="font-family:sans-serif;background:#f1f5f9;padding:20px;"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;"><div style="background:#00d09c;padding:20px;color:#fff;"><h2 style="margin:0;">Groww Weekly Review Pulse</h2><p style="margin:4px 0 0 0;font-size:12px;">${p.week_identifier} • ${p.total_reviews_analyzed} Reviews</p></div><div style="padding:20px;"><div style="background:#f0fdf9;border-left:4px solid #00d09c;padding:12px;margin-bottom:16px;"><strong style="font-size:11px;color:#008765;text-transform:uppercase;">Executive Summary</strong><p style="margin:4px 0 0 0;font-size:13px;color:#134e4a;">${p.executive_summary}</p></div><h4 style="margin:16px 0 8px 0;font-size:13px;text-transform:uppercase;">Top User Themes</h4>${p.top_themes.map(t => `<div style="background:#f8fafc;border-left:4px solid #00d09c;padding:10px;margin-bottom:8px;"><div style="font-weight:700;font-size:13px;">#${t.rank} ${t.name} <span style="float:right;font-size:11px;color:#008765;">${t.metric}</span></div><div style="font-size:12px;color:#475569;margin-top:4px;">${t.summary}</div></div>`).join('')}<h4 style="margin:16px 0 8px 0;font-size:13px;text-transform:uppercase;">Verbatim Quotes</h4>${p.verbatim_quotes.map(q => `<div style="background:#fffbeb;border-left:4px solid #f59e0b;padding:10px;font-size:12px;font-style:italic;color:#92400e;margin-bottom:8px;">"${q}"</div>`).join('')}<h4 style="margin:16px 0 8px 0;font-size:13px;text-transform:uppercase;">3 Action Ideas</h4>${p.action_ideas.map((a, i) => `<div style="background:#f8fafc;padding:8px 12px;margin-bottom:6px;font-size:12px;font-weight:600;">${i+1}. ${a}</div>`).join('')}</div></div></body></html>`;
+        },
+        getMarkdown() {
+          if (this.lastResult?.markdown_content) {
+            return this.lastResult.markdown_content;
+          }
+          const p = this.getPulse();
+          return `# Groww Weekly Review Pulse (${p.week_identifier})\n\n**Total Play Store Reviews**: ${p.total_reviews_analyzed} | **Word Count**: ${p.word_count || 147} / 250 words max\n\n## 1. Executive Summary\n${p.executive_summary}\n\n## 2. Top 3 User Themes\n${p.top_themes.map(t => `${t.rank}. **${t.name}** (${t.metric}): ${t.summary}`).join('\n')}\n\n## 3. Real User Quotes (100% Verbatim)\n${p.verbatim_quotes.map(q => `- *"${q}"*`).join('\n')}\n\n## 4. Prioritized Action Ideas\n${p.action_ideas.map((a, i) => `${i+1}. **${a}**`).join('\n')}`;
+        },
         async runPipeline() {
           this.isLoading = true;
           this.successBanner = null;
-          this.executionLog = '🚀 Launching LangGraph Agent Pipeline...\n- Scraping & Sanitizing Google Play Store Reviews\n- Thematic Clustering via Groq\n- Synthesis & Guardrail Check via Gemini\n- Disagreeing PII & Dispatching via Gmail MCP...';
+          this.executionLog = '🚀 Launching LangGraph Agent Pipeline...\n- Ingesting Google Play Store Reviews\n- Sanitizing & Scrubbing PII\n- Thematic Clustering via Groq\n- Synthesis & Guardrail Check via Gemini\n- Dispatching via Gmail MCP...';
           
           try {
             const res = await fetch('/api/pulse/generate', {
@@ -491,6 +522,9 @@
             });
             const data = await res.json();
             this.lastResult = data;
+            if (data.pulse) {
+              this.pulseData = data.pulse;
+            }
             this.executionLog = JSON.stringify(data, null, 2);
 
             if (res.ok && data.status === 'success') {
@@ -519,8 +553,8 @@
           }
         },
         copyMarkdown() {
-          const sampleMd = `# Groww Weekly Review Pulse (2026-W38)\n\n**Total Play Store Reviews**: 50 | **Word Count**: 147 / 250 words max\n\n## 1. Executive Summary\nWeekly pulse highlights user engagement, while friction centers on App Performance, Latency & Charts.\n\n## 2. Top 3 User Themes\n1. App Performance & Glitches (68.3% vol, 2.87★)\n2. Order Execution & F&O Charts (15.9% vol, 2.55★)\n3. Payments, UPI & Fund Transfers (6.7% vol, 1.57★)\n\n## 3. Real User Quotes\n- "delay chart, slow chart sometimes stuck. and lots of bugs in this app"\n- "Groww is constantly lagging, hanging, and taking too long to load."\n- "Incorrect external fund Investment values & useless support"\n\n## 4. Prioritized Action Ideas\n1. Fix chart render freezes and latency in next sprint.\n2. Stabilize F&O order execution pipelines.\n3. Redesign fund import parser & launch UPI retry banner.`;
-          navigator.clipboard.writeText(sampleMd);
+          const md = this.getMarkdown();
+          navigator.clipboard.writeText(md);
           alert("Markdown copied to clipboard!");
         }
       }

@@ -194,3 +194,23 @@ async def test_mcp_server_tool_call_jsonrpc_flow():
     res = await server.handle_request(call_req)
     assert res["result"]["isError"] is True
     assert "INTERNAL_ERROR" in res["result"]["content"][0]["text"]
+
+def test_gmail_html_mime_message_creation():
+    import base64
+    from email import message_from_bytes
+    service = GmailService(auth_manager=MagicMock())
+    
+    html_content = "<!DOCTYPE html><html><body><h1>Groww Weekly Pulse</h1><p>Executive summary text.</p></body></html>"
+    raw_b64 = service._build_mime_message(
+        to=["recipient@example.com"],
+        subject="Groww Weekly Pulse",
+        body=html_content
+    )
+    
+    raw_bytes = base64.urlsafe_b64decode(raw_b64.encode("utf-8"))
+    parsed_msg = message_from_bytes(raw_bytes)
+    
+    assert parsed_msg.is_multipart()
+    content_types = [part.get_content_type() for part in parsed_msg.walk()]
+    assert "text/plain" in content_types
+    assert "text/html" in content_types

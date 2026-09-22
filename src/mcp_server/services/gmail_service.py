@@ -29,8 +29,8 @@ class GmailService:
         bcc: Optional[List[str]] = None
     ) -> str:
         """Constructs an RFC 2822 MIME message and returns a Base64URL-encoded raw string."""
+        import re
         msg = EmailMessage()
-        msg.set_content(body, charset="utf-8")
         msg["Subject"] = subject
         msg["To"] = ", ".join(to)
         
@@ -38,6 +38,28 @@ class GmailService:
             msg["Cc"] = ", ".join(cc)
         if bcc:
             msg["Bcc"] = ", ".join(bcc)
+
+        # Detect if body is HTML
+        is_html = bool(
+            re.search(r'<(?:!doctype|html|body|div|p|table|h[1-6]|span)', body, re.IGNORECASE)
+        )
+
+        if is_html:
+            # Strip CSS styles & HTML tags to create a clean plain text fallback
+            plain_text = re.sub(r'<style[^>]*>.*?</style>', '', body, flags=re.DOTALL | re.IGNORECASE)
+            plain_text = re.sub(r'<script[^>]*>.*?</script>', '', plain_text, flags=re.DOTALL | re.IGNORECASE)
+            plain_text = re.sub(r'<br\s*/?>', '\n', plain_text, flags=re.IGNORECASE)
+            plain_text = re.sub(r'</p>', '\n\n', plain_text, flags=re.IGNORECASE)
+            plain_text = re.sub(r'</div>', '\n', plain_text, flags=re.IGNORECASE)
+            plain_text = re.sub(r'</li>', '\n', plain_text, flags=re.IGNORECASE)
+            plain_text = re.sub(r'<[^>]+>', '', plain_text)
+            plain_text = re.sub(r'[ \t]+', ' ', plain_text)
+            plain_text = re.sub(r'\n\s*\n+', '\n\n', plain_text).strip()
+
+            msg.set_content(plain_text or "Groww Weekly Review Pulse Note", charset="utf-8")
+            msg.add_alternative(body, subtype="html")
+        else:
+            msg.set_content(body, charset="utf-8")
 
         raw_bytes = msg.as_bytes()
         return base64.urlsafe_b64encode(raw_bytes).decode("utf-8")

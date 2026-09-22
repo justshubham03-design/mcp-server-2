@@ -278,81 +278,122 @@ class PulseBuilder:
 
     @staticmethod
     def render_html_email(pulse: WeeklyPulse, doc_url: Optional[str] = None) -> str:
-        """Renders the WeeklyPulse into HTML email format for Gmail."""
+        """Renders the WeeklyPulse into a clean, arranged, inline-styled HTML email format for Gmail."""
         theme_cards = ""
         for t in pulse.top_themes:
             theme_cards += f"""
-      <div class="theme-card">
-        <div class="theme-title">#{t.rank} {t.name}</div>
-        <div class="theme-metric">{t.metric}</div>
-        <div class="theme-desc">{t.summary}</div>
-      </div>"""
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 12px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #00d09c; border-radius: 0 8px 8px 0;">
+          <tr>
+            <td style="padding: 12px 16px;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="font-weight: 700; font-size: 14px; color: #0f172a;">#{t.rank} {t.name}</td>
+                  <td align="right" style="font-size: 11px; font-weight: 700; color: #008765; background-color: #e6fffa; padding: 2px 8px; border-radius: 12px; white-space: nowrap;">{t.metric}</td>
+                </tr>
+              </table>
+              <div style="font-size: 13px; color: #475569; line-height: 1.5; margin-top: 6px;">{t.summary}</div>
+            </td>
+          </tr>
+        </table>"""
 
         quotes_boxes = ""
         for q in pulse.verbatim_quotes:
             quotes_boxes += f"""
-      <div class="quote-box">
-        "{q}"
-      </div>"""
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px; background-color: #fffbeb; border: 1px solid #fef3c7; border-left: 4px solid #f59e0b; border-radius: 0 8px 8px 0;">
+          <tr>
+            <td style="padding: 12px 16px; font-size: 13px; font-style: italic; color: #92400e; line-height: 1.5;">
+              "{q}"
+            </td>
+          </tr>
+        </table>"""
 
         action_items = ""
-        for a in pulse.action_ideas:
+        for i, a in enumerate(pulse.action_ideas, 1):
             action_items += f"""
-        <li class="action-item"><strong>{a}</strong></li>"""
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+          <tr>
+            <td width="32" valign="top" style="padding: 12px 0 12px 14px;">
+              <div style="background-color: #00d09c; color: #ffffff; font-weight: 800; font-size: 11px; width: 22px; height: 22px; border-radius: 50%; text-align: center; line-height: 22px;">{i}</div>
+            </td>
+            <td style="padding: 12px 14px 12px 8px; font-size: 13px; color: #1e293b; font-weight: 600; line-height: 1.45;">
+              {a}
+            </td>
+          </tr>
+        </table>"""
 
         cta_btn = ""
         if doc_url:
             cta_btn = f"""
-      <div style="text-align: center; margin-top: 24px;">
-        <a href="{doc_url}" class="btn" target="_blank">Open Full Note in Google Docs &rarr;</a>
-      </div>"""
+        <div style="text-align: center; margin-top: 24px; margin-bottom: 10px;">
+          <a href="{doc_url}" style="background-color: #00d09c; color: #0b1311; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-block;" target="_blank">Open Full Note in Google Docs &rarr;</a>
+        </div>"""
 
         return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <style>
-    body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background-color: #f8fafc; margin: 0; padding: 24px; line-height: 1.6; }}
-    .container {{ max-width: 640px; margin: 0 auto; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; }}
-    .header {{ background: #00d09c; padding: 24px; color: #ffffff; }}
-    .header h1 {{ margin: 0 0 6px 0; font-size: 20px; font-weight: 700; }}
-    .header p {{ margin: 0; font-size: 13px; opacity: 0.95; }}
-    .content {{ padding: 24px; }}
-    .section-title {{ font-size: 15px; font-weight: 700; color: #0f172a; margin-top: 20px; margin-bottom: 10px; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px; }}
-    .theme-card {{ background: #f8fafc; border-left: 4px solid #00d09c; padding: 10px 14px; margin-bottom: 10px; border-radius: 0 6px 6px 0; }}
-    .theme-title {{ font-weight: 600; font-size: 14px; color: #0f172a; }}
-    .theme-metric {{ font-size: 12px; color: #64748b; font-weight: 500; }}
-    .theme-desc {{ font-size: 13px; color: #334155; margin-top: 4px; }}
-    .quote-box {{ background: #fffbeb; border-left: 4px solid #f59e0b; padding: 10px 14px; margin-bottom: 10px; font-style: italic; font-size: 13px; color: #78350f; border-radius: 0 6px 6px 0; }}
-    .action-item {{ font-size: 13px; color: #1e293b; margin-bottom: 8px; }}
-    .btn {{ display: inline-block; background-color: #00d09c; color: #ffffff !important; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; margin-top: 16px; }}
-    .footer {{ padding: 16px 24px; font-size: 12px; color: #94a3b8; background: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center; }}
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Groww Weekly Review Pulse</title>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Groww Weekly Review Pulse</h1>
-      <p>{pulse.week_identifier} &bull; {pulse.total_reviews_analyzed} Reviews Analyzed</p>
-    </div>
-    <div class="content">
-      <p style="font-size: 14px; margin-top: 0;">{pulse.executive_summary}</p>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background-color: #f1f5f9; margin: 0; padding: 20px; line-height: 1.6;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 620px; background-color: #ffffff; border-radius: 12px; border: 1px solid #e2e8f0; overflow: hidden; text-align: left; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background-color: #00d09c; padding: 24px 28px; color: #ffffff;">
+              <h1 style="margin: 0 0 6px 0; font-size: 22px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px;">Groww Weekly Review Pulse</h1>
+              <p style="margin: 0; font-size: 13px; color: #f0fdf9; font-weight: 500;">
+                📅 <strong>{pulse.week_identifier}</strong> &bull; 📊 <strong>{pulse.total_reviews_analyzed}</strong> Reviews Analyzed &bull; ⏱️ 8-Week Window
+              </p>
+            </td>
+          </tr>
 
-      <div class="section-title">Top 3 User Themes</div>
-      {theme_cards}
+          <!-- Main Content -->
+          <tr>
+            <td style="padding: 24px 28px;">
+              
+              <!-- Executive Summary -->
+              <div style="background-color: #f0fdf9; border-left: 4px solid #00d09c; border-radius: 0 8px 8px 0; padding: 14px 18px; margin-bottom: 24px;">
+                <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #008765; margin-bottom: 6px;">⚡ Executive Summary</div>
+                <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #134e4a; font-weight: 500;">{pulse.executive_summary}</p>
+              </div>
 
-      <div class="section-title">Authentic User Quotes</div>
-      {quotes_boxes}
+              <!-- Top 3 User Themes -->
+              <div style="font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #0f172a; margin-top: 20px; margin-bottom: 12px; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px;">
+                🔥 Top 3 User Themes
+              </div>
+              {theme_cards}
 
-      <div class="section-title">3 Action Ideas</div>
-      <ol style="padding-left: 20px; margin: 0;">
-        {action_items}
-      </ol>
-      {cta_btn}
-    </div>
-    <div class="footer">
-      Generated automatically by Groww Review Pulse AI Agent.
-    </div>
-  </div>
+              <!-- Authentic Quotes -->
+              <div style="font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #0f172a; margin-top: 24px; margin-bottom: 12px; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px;">
+                💬 Authentic User Quotes (100% Verbatim)
+              </div>
+              {quotes_boxes}
+
+              <!-- Action Ideas -->
+              <div style="font-size: 13px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; color: #0f172a; margin-top: 24px; margin-bottom: 12px; border-bottom: 2px solid #f1f5f9; padding-bottom: 6px;">
+                🎯 3 Prioritized Action Ideas
+              </div>
+              {action_items}
+
+              {cta_btn}
+
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 16px 28px; font-size: 11px; color: #94a3b8; background-color: #f8fafc; border-top: 1px solid #e2e8f0; text-align: center;">
+              Generated automatically by Groww Review Pulse AI Agent &bull; Max 250 words total &bull; Zero PII
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>"""

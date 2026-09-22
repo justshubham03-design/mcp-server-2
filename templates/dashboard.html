@@ -6,7 +6,7 @@
   <title>Groww Review Pulse AI - Dashboard & MCP Control Center</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Alpine.js for lightweight reactivity -->
+  <!-- Alpine.js for reactivity -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -48,7 +48,7 @@
             Groww Review Pulse AI
             <span class="text-xs bg-groww-primary/20 text-groww-primary px-2 py-0.5 rounded-full font-medium border border-groww-primary/30">v1.0 Live</span>
           </h1>
-          <p class="text-xs text-slate-400">Google Play Store Intelligence & MCP Workspace Dispatcher</p>
+          <p class="text-xs text-slate-400">Google Play Store Intelligence & Automated Email Dispatcher</p>
         </div>
       </div>
 
@@ -57,19 +57,19 @@
         <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-groww-surface border border-groww-border">
           <span class="w-2 h-2 rounded-full" :class="health.services?.groq_configured ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
           <span class="text-slate-300">Phase 2 Groq:</span>
-          <span class="font-semibold" :class="health.services?.groq_configured ? 'text-emerald-400' : 'text-amber-400'" x-text="health.services?.groq_configured ? 'Active' : 'Fallback'"></span>
+          <span class="font-semibold" :class="health.services?.groq_configured ? 'text-emerald-400' : 'text-amber-400'" x-text="health.services?.groq_configured ? 'Active' : 'Ready'"></span>
         </div>
 
         <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-groww-surface border border-groww-border">
           <span class="w-2 h-2 rounded-full" :class="health.services?.gemini_configured ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
           <span class="text-slate-300">Phase 3 Gemini:</span>
-          <span class="font-semibold" :class="health.services?.gemini_configured ? 'text-emerald-400' : 'text-amber-400'" x-text="health.services?.gemini_configured ? 'Active' : 'Fallback'"></span>
+          <span class="font-semibold" :class="health.services?.gemini_configured ? 'text-emerald-400' : 'text-amber-400'" x-text="health.services?.gemini_configured ? 'Active' : 'Ready'"></span>
         </div>
 
         <div class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-groww-surface border border-groww-border">
           <span class="w-2 h-2 rounded-full" :class="health.services?.google_mcp_authenticated ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'"></span>
-          <span class="text-slate-300">MCP Auth:</span>
-          <span class="font-semibold" :class="health.services?.google_mcp_authenticated ? 'text-emerald-400' : 'text-amber-400'" x-text="health.services?.google_mcp_authenticated ? 'Authenticated' : 'Offline / Local'"></span>
+          <span class="text-slate-300">Gmail Delivery:</span>
+          <span class="font-semibold" :class="health.services?.google_mcp_authenticated ? 'text-emerald-400' : 'text-amber-400'" x-text="health.services?.google_mcp_authenticated ? 'Authenticated' : 'Local / Staging'"></span>
         </div>
       </div>
     </div>
@@ -121,13 +121,13 @@
 
     <!-- Navigation Tabs -->
     <div class="flex border-b border-groww-border space-x-8">
+      <button @click="activeTab = 'generator'" class="py-3 text-sm font-semibold border-b-2 transition flex items-center gap-2"
+        :class="activeTab === 'generator' ? 'border-groww-primary text-groww-primary' : 'border-transparent text-slate-400 hover:text-slate-200'">
+        <i data-lucide="send" class="w-4 h-4"></i> Run & Send Email
+      </button>
       <button @click="activeTab = 'pulse'" class="py-3 text-sm font-semibold border-b-2 transition flex items-center gap-2"
         :class="activeTab === 'pulse' ? 'border-groww-primary text-groww-primary' : 'border-transparent text-slate-400 hover:text-slate-200'">
         <i data-lucide="file-text" class="w-4 h-4"></i> Weekly Pulse Note
-      </button>
-      <button @click="activeTab = 'generator'" class="py-3 text-sm font-semibold border-b-2 transition flex items-center gap-2"
-        :class="activeTab === 'generator' ? 'border-groww-primary text-groww-primary' : 'border-transparent text-slate-400 hover:text-slate-200'">
-        <i data-lucide="play-circle" class="w-4 h-4"></i> Run Pipeline
       </button>
       <button @click="activeTab = 'mcp'" class="py-3 text-sm font-semibold border-b-2 transition flex items-center gap-2"
         :class="activeTab === 'mcp' ? 'border-groww-primary text-groww-primary' : 'border-transparent text-slate-400 hover:text-slate-200'">
@@ -135,11 +135,119 @@
       </button>
       <button @click="activeTab = 'api'" class="py-3 text-sm font-semibold border-b-2 transition flex items-center gap-2"
         :class="activeTab === 'api' ? 'border-groww-primary text-groww-primary' : 'border-transparent text-slate-400 hover:text-slate-200'">
-        <i data-lucide="code" class="w-4 h-4"></i> Client Setup & API
+        <i data-lucide="code" class="w-4 h-4"></i> API & Webhooks
       </button>
     </div>
 
-    <!-- TAB 1: Weekly Pulse Note Viewer -->
+    <!-- TAB 1: Run & Send Email Form -->
+    <div x-show="activeTab === 'generator'" class="space-y-6">
+      <div class="bg-groww-card border border-groww-border rounded-2xl p-6 shadow-md">
+        <h2 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+          <i data-lucide="mail-check" class="w-5 h-5 text-groww-primary"></i> Run Review Pulse & Send Email
+        </h2>
+        <p class="text-xs text-slate-400 mb-6">Fetches Play Store reviews, scrubs PII, clusters themes with Groq, synthesizes with Gemini, and delivers the report straight to your email.</p>
+
+        <!-- Success Notification Banner -->
+        <template x-if="successBanner">
+          <div class="mb-6 p-4 rounded-xl bg-emerald-950/80 border border-emerald-500 text-emerald-300 text-sm flex items-start gap-3 animate-fade-in shadow-lg">
+            <i data-lucide="check-circle-2" class="w-5 h-5 text-emerald-400 shrink-0 mt-0.5"></i>
+            <div>
+              <div class="font-bold text-white" x-text="successBanner.title"></div>
+              <div class="text-xs text-emerald-200 mt-1" x-text="successBanner.message"></div>
+            </div>
+          </div>
+        </template>
+
+        <form @submit.prevent="runPipeline()" class="space-y-6">
+          
+          <!-- Delivery Mode Selector Cards -->
+          <div>
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Delivery Action</label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <!-- Direct Send Card -->
+              <div @click="params.send_direct = true" 
+                   class="cursor-pointer p-4 rounded-xl border transition flex items-start gap-3.5"
+                   :class="params.send_direct ? 'bg-groww-primary/10 border-groww-primary ring-1 ring-groww-primary' : 'bg-groww-surface border-groww-border hover:border-slate-600'">
+                <input type="radio" name="delivery_mode" :checked="params.send_direct" class="mt-1 text-groww-primary focus:ring-groww-primary">
+                <div>
+                  <div class="font-bold text-sm text-white flex items-center gap-1.5">
+                    <span>⚡ Send Directly to Inbox</span>
+                    <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full">Recommended</span>
+                  </div>
+                  <div class="text-xs text-slate-300 mt-1">Transmits the weekly pulse email immediately to your recipient address.</div>
+                </div>
+              </div>
+
+              <!-- Draft Mode Card -->
+              <div @click="params.send_direct = false" 
+                   class="cursor-pointer p-4 rounded-xl border transition flex items-start gap-3.5"
+                   :class="!params.send_direct ? 'bg-groww-primary/10 border-groww-primary ring-1 ring-groww-primary' : 'bg-groww-surface border-groww-border hover:border-slate-600'">
+                <input type="radio" name="delivery_mode" :checked="!params.send_direct" class="mt-1 text-groww-primary focus:ring-groww-primary">
+                <div>
+                  <div class="font-bold text-sm text-white">📝 Save as Gmail Draft</div>
+                  <div class="text-xs text-slate-300 mt-1">Stages the formatted HTML email in your Gmail Drafts folder for review.</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Configuration Fields -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Your Email Address (Recipient)</label>
+              <input type="email" required x-model="params.email" placeholder="shubham@example.com" class="w-full bg-groww-surface border border-groww-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-groww-primary transition shadow-inner">
+              <p class="text-[11px] text-slate-400 mt-1">Where the weekly pulse summary will be delivered</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Lookback Window (Weeks)</label>
+              <input type="number" min="1" max="52" x-model="params.weeks" class="w-full bg-groww-surface border border-groww-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-groww-primary transition">
+              <p class="text-[11px] text-slate-400 mt-1">Default: 8 weeks of Google Play Store reviews</p>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Google Doc ID (Optional)</label>
+              <input type="text" x-model="params.doc_id" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgm..." class="w-full bg-groww-surface border border-groww-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-groww-primary transition">
+              <p class="text-[11px] text-slate-400 mt-1">Append to an existing doc (leave blank for standalone report)</p>
+            </div>
+
+            <div class="flex items-center space-x-3 pt-6">
+              <input type="checkbox" id="mockToggle" x-model="params.use_mock" class="w-4 h-4 rounded text-groww-primary bg-groww-surface border-groww-border focus:ring-groww-primary">
+              <label for="mockToggle" class="text-xs text-slate-300">Use Cached / Mock Reviews (Fast offline mode)</label>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-4 border-t border-groww-border flex items-center justify-between">
+            <div class="text-xs text-slate-400">
+              <span class="font-semibold text-slate-200">Invariants:</span> Max 250 words total • 100% Verbatim quotes • Zero PII.
+            </div>
+            <button type="submit" :disabled="isLoading" class="bg-groww-primary hover:bg-emerald-400 disabled:opacity-50 text-black font-extrabold text-sm px-8 py-3.5 rounded-xl transition flex items-center gap-2.5 shadow-xl shadow-groww-primary/20">
+              <template x-if="isLoading">
+                <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+              </template>
+              <template x-if="!isLoading">
+                <i data-lucide="send" class="w-4 h-4"></i>
+              </template>
+              <span x-text="isLoading ? 'Running Pipeline & Sending...' : (params.send_direct ? '🚀 Generate & Send Email to Inbox' : '📝 Generate & Save Gmail Draft')"></span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Live Execution Output Console -->
+        <div x-show="executionLog" class="mt-6 border border-groww-border rounded-xl p-4 bg-black/60 font-mono text-xs text-emerald-400 space-y-1" x-cloak>
+          <div class="text-slate-400 font-bold mb-1 flex items-center justify-between">
+            <span>// Pipeline Execution Details:</span>
+            <span class="text-[10px] text-slate-500">Live JSON Response</span>
+          </div>
+          <pre class="whitespace-pre-wrap text-slate-200" x-text="executionLog"></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Weekly Pulse Note Viewer -->
     <div x-show="activeTab === 'pulse'" class="space-y-6" x-cloak>
       <div class="bg-groww-card border border-groww-border rounded-2xl p-6 shadow-md">
         <div class="flex items-center justify-between border-b border-groww-border pb-4 mb-6">
@@ -152,9 +260,6 @@
             <p class="text-xs text-slate-400 mt-1">Executive scannable note synthesized from Google Play Store user reviews</p>
           </div>
           <div class="flex items-center gap-3">
-            <button @click="fetchLatestMarkdown()" class="text-xs bg-groww-surface hover:bg-groww-border text-slate-200 px-3 py-2 rounded-xl transition flex items-center gap-1.5 border border-groww-border">
-              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh Latest
-            </button>
             <button @click="copyMarkdown()" class="text-xs bg-groww-primary hover:bg-emerald-400 text-black font-semibold px-4 py-2 rounded-xl transition flex items-center gap-1.5 shadow-md">
               <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Markdown
             </button>
@@ -259,70 +364,6 @@
       </div>
     </div>
 
-    <!-- TAB 2: Run Pipeline Form -->
-    <div x-show="activeTab === 'generator'" class="space-y-6" x-cloak>
-      <div class="bg-groww-card border border-groww-border rounded-2xl p-6 shadow-md">
-        <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
-          <i data-lucide="play" class="w-5 h-5 text-groww-primary"></i> Trigger Groww Pulse Pipeline
-        </h2>
-        <p class="text-xs text-slate-400 mb-6">Launch the full LangGraph pipeline: Ingest $\rightarrow$ Sanitize $\rightarrow$ Groq Theming $\rightarrow$ Gemini Synthesis $\rightarrow$ MCP Staging.</p>
-
-        <form @submit.prevent="runPipeline()" class="space-y-5">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Lookback Period (Weeks)</label>
-              <input type="number" min="1" max="52" x-model="params.weeks" class="w-full bg-groww-surface border border-groww-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-groww-primary transition">
-              <p class="text-[11px] text-slate-400 mt-1">Default: 8 weeks. Target package: com.nextbillion.groww</p>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Recipient Email for Gmail Draft</label>
-              <input type="email" x-model="params.email" placeholder="leadership@groww.in" class="w-full bg-groww-surface border border-groww-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-groww-primary transition">
-              <p class="text-[11px] text-slate-400 mt-1">Gmail MCP tool will stage a draft for this recipient</p>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Google Doc ID (Optional)</label>
-              <input type="text" x-model="params.doc_id" placeholder="e.g. 1BxiMVs0XRA5nFMdKvBdBZjgm..." class="w-full bg-groww-surface border border-groww-border rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-groww-primary transition">
-              <p class="text-[11px] text-slate-400 mt-1">Leave empty to generate standalone markdown document</p>
-            </div>
-
-            <div class="flex flex-col space-y-3 pt-4">
-              <div class="flex items-center space-x-3">
-                <input type="checkbox" id="mockToggle" x-model="params.use_mock" class="w-4 h-4 rounded text-groww-primary bg-groww-surface border-groww-border focus:ring-groww-primary">
-                <label for="mockToggle" class="text-xs text-slate-300">Use Cached / Mock Reviews (Fast offline mode)</label>
-              </div>
-              <div class="flex items-center space-x-3">
-                <input type="checkbox" id="sendDirectToggle" x-model="params.send_direct" class="w-4 h-4 rounded text-groww-primary bg-groww-surface border-groww-border focus:ring-groww-primary">
-                <label for="sendDirectToggle" class="text-xs text-slate-300 font-semibold text-emerald-400">⚡ Send directly to Inbox (instead of creating draft)</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="pt-4 border-t border-groww-border flex items-center justify-between">
-            <div class="text-xs text-slate-400">
-              <span class="font-semibold text-slate-200">Guardrails:</span> Output strictly $\le 250$ words & 100% verbatim quotes.
-            </div>
-            <button type="submit" :disabled="isLoading" class="bg-groww-primary hover:bg-emerald-400 disabled:opacity-50 text-black font-bold px-6 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-groww-primary/20">
-              <template x-if="isLoading">
-                <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-              </template>
-              <template x-if="!isLoading">
-                <i data-lucide="sparkles" class="w-4 h-4"></i>
-              </template>
-              <span x-text="isLoading ? 'Running Pipeline...' : 'Generate Review Pulse'"></span>
-            </button>
-          </div>
-        </form>
-
-        <!-- Live Execution Output Console -->
-        <div x-show="executionLog" class="mt-6 border border-groww-border rounded-xl p-4 bg-black/50 font-mono text-xs text-emerald-400 space-y-1" x-cloak>
-          <div class="text-slate-400 font-bold mb-1">// Execution Result:</div>
-          <pre class="whitespace-pre-wrap text-slate-200" x-text="executionLog"></pre>
-        </div>
-      </div>
-    </div>
-
     <!-- TAB 3: MCP Tools Explorer -->
     <div x-show="activeTab === 'mcp'" class="space-y-6" x-cloak>
       <div class="bg-groww-card border border-groww-border rounded-2xl p-6 shadow-md">
@@ -368,7 +409,7 @@
       </div>
     </div>
 
-    <!-- TAB 4: Client Setup & API -->
+    <!-- TAB 4: API & Webhooks -->
     <div x-show="activeTab === 'api'" class="space-y-6" x-cloak>
       <div class="bg-groww-card border border-groww-border rounded-2xl p-6 shadow-md space-y-6">
         <div>
@@ -392,11 +433,11 @@
         </div>
 
         <div>
-          <h3 class="text-xs font-bold text-slate-300 mb-2">Trigger via REST API (cURL)</h3>
+          <h3 class="text-xs font-bold text-slate-300 mb-2">Trigger Direct Send via REST API (cURL)</h3>
           <div class="bg-black/60 border border-groww-border p-4 rounded-xl font-mono text-xs text-emerald-400 overflow-x-auto">
 <pre>curl -X POST "https://mcp-server-2-production-c1a3.up.railway.app/api/pulse/generate" \
      -H "Content-Type: application/json" \
-     -d '{"weeks": 8, "email": "leadership@groww.in"}'</pre>
+     -d '{"weeks": 8, "email": "your_email@gmail.com", "send_direct": true}'</pre>
           </div>
         </div>
       </div>
@@ -412,17 +453,18 @@
   <script>
     function dashboardApp() {
       return {
-        activeTab: 'pulse',
+        activeTab: 'generator',
         isLoading: false,
         health: {},
         lastResult: null,
         executionLog: '',
+        successBanner: null,
         params: {
           weeks: 8,
           email: 'leadership@groww.in',
           doc_id: '',
           use_mock: false,
-          send_direct: false
+          send_direct: true
         },
         async initDashboard() {
           lucide.createIcons();
@@ -436,20 +478,11 @@
             console.error('Health check failed', e);
           }
         },
-        async fetchLatestMarkdown() {
-          try {
-            const res = await fetch('/api/pulse/latest');
-            if (res.ok) {
-              const text = await res.text();
-              alert("Latest pulse loaded successfully!");
-            }
-          } catch(e) {
-            alert("Failed to load latest markdown");
-          }
-        },
         async runPipeline() {
           this.isLoading = true;
-          this.executionLog = 'Triggering LangGraph agent pipeline...';
+          this.successBanner = null;
+          this.executionLog = '🚀 Launching LangGraph Agent Pipeline...\n- Scraping & Sanitizing Google Play Store Reviews\n- Thematic Clustering via Groq\n- Synthesis & Guardrail Check via Gemini\n- Disagreeing PII & Dispatching via Gmail MCP...';
+          
           try {
             const res = await fetch('/api/pulse/generate', {
               method: 'POST',
@@ -459,7 +492,25 @@
             const data = await res.json();
             this.lastResult = data;
             this.executionLog = JSON.stringify(data, null, 2);
-            this.activeTab = 'pulse';
+
+            if (res.ok && data.status === 'success') {
+              if (this.params.send_direct) {
+                this.successBanner = {
+                  title: '🎉 Email Sent Successfully!',
+                  message: `Weekly Review Pulse report delivered directly to ${this.params.email}. Check your inbox!`
+                };
+              } else {
+                this.successBanner = {
+                  title: '📝 Gmail Draft Created Successfully!',
+                  message: `Weekly Review Pulse draft staged in Gmail for ${this.params.email}. Open Gmail Drafts to review and send.`
+                };
+              }
+            } else {
+              this.successBanner = {
+                title: '⚠️ Pipeline Execution Warning',
+                message: data.errors ? data.errors.join(', ') : 'Check execution details below.'
+              };
+            }
           } catch (e) {
             this.executionLog = 'Error executing pipeline: ' + e;
           } finally {
